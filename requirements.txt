@@ -1,0 +1,12 @@
+# Telegram Bot
+python-telegram-bot==21.0.1
+
+# Google Sheets API
+gspread==6.0.0
+google-auth==2.27.0
+
+# Environment variables
+python-dotenv==1.0.0
+
+# Timezone handling
+pytz==2023.4
