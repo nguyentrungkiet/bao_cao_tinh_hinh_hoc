@@ -291,17 +291,38 @@ class ScoresParser:
         # Nếu tên ngắn hơn, check xem tất cả tokens có trong tên dài không
         if len(tokens1) <= len(tokens2):
             # Tất cả tokens của name1 phải có trong name2
-            if all(token in tokens2 for token in tokens1):
-                return True
+            all_tokens_present = all(token in tokens2 for token in tokens1)
+            
+            if all_tokens_present:
+                # Kiểm tra thêm: nếu có >= 3 tokens giống nhau, check thứ tự
+                # để phân biệt "nguyen mai phuong vy" vs "nguyen phan phuong vy"
+                if len(tokens1) >= 3:
+                    # Tìm vị trí của các tokens trong name2
+                    indices_in_name2 = []
+                    for token in tokens1:
+                        if token in tokens2:
+                            indices_in_name2.append(tokens2.index(token))
+                    
+                    # Kiểm tra xem các tokens có theo thứ tự tăng dần không
+                    # VD: "nguyen mai phuong vy" -> indices [0, 1, 2, 3] (OK)
+                    # VD: "nguyen mai phuong vy" trong "nguyen phan phuong vy"
+                    #     -> "nguyen" ở vị trí 0, "mai" không có, không match
+                    if indices_in_name2 == sorted(indices_in_name2):
+                        # Nếu thứ tự đúng, chấp nhận match
+                        return True
+                    else:
+                        # Thứ tự không đúng, cần kiểm tra thêm
+                        # Tính tỷ lệ tokens giống nhau
+                        common_tokens = set(tokens1) & set(tokens2)
+                        match_ratio = len(common_tokens) / len(tokens1)
+                        # Yêu cầu >= 80% tokens giống nhau và match theo thứ tự
+                        return match_ratio >= 0.8
+                else:
+                    # Với tên ngắn (<3 tokens), chấp nhận nếu tất cả tokens có mặt
+                    return True
         else:
             # Tên 1 dài hơn tên 2, check ngược lại
             if all(token in tokens1 for token in tokens2):
-                return True
-        
-        # Partial token match: ít nhất 2 tokens giống nhau (với tên >= 2 tokens)
-        if len(tokens1) >= 2 and len(tokens2) >= 2:
-            common_tokens = set(tokens1) & set(tokens2)
-            if len(common_tokens) >= 2:
                 return True
         
         return False
