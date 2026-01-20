@@ -1,0 +1,3 @@
+# Logs directory for bot output
+*.log
+*.log.*
