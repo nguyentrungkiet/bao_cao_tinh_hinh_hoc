@@ -297,12 +297,20 @@ def main():
         raise
 
 if __name__ == "__main__":
-    # Fix for Windows event loop policy
+    # Fix for Windows + Python 3.14 event loop issue
     import sys
     import asyncio
     
     if sys.platform == 'win32':
-        # Set the event loop policy for Windows
-        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+        # For Python 3.14+, create a new event loop explicitly
+        try:
+            # Try to get existing event loop
+            loop = asyncio.get_event_loop()
+            if loop.is_closed():
+                raise RuntimeError("Event loop is closed")
+        except RuntimeError:
+            # Create new event loop if none exists or if closed
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
     
     main()
