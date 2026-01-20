@@ -269,12 +269,6 @@ Có vấn đề? Liên hệ admin! 📞"""
     def run(self):
         """Run the bot"""
         try:
-            # Create application
-            self.application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
-            
-            # Setup handlers
-            self.setup_handlers()
-            
             # Start bot
             logger.info("🚀 Bot đang khởi động...")
             logger.info("📋 Chức năng báo cáo: ✅")
@@ -282,6 +276,12 @@ Có vấn đề? Liên hệ admin! 📞"""
             logger.info("🔗 Google Sheets integration: ✅")
             logger.info("⏰ Timezone: Asia/Ho_Chi_Minh")
             logger.info("📱 Bot sẵn sàng nhận tin nhắn!")
+            
+            # Create application
+            self.application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
+            
+            # Setup handlers
+            self.setup_handlers()
             
             # Run bot
             self.application.run_polling(allowed_updates=Update.ALL_TYPES)
