@@ -268,34 +268,41 @@ Có vấn đề? Liên hệ admin! 📞"""
 
     def run(self):
         """Run the bot"""
-        try:
-            # Start bot
-            logger.info("🚀 Bot đang khởi động...")
-            logger.info("📋 Chức năng báo cáo: ✅")
-            logger.info("💯 Chức năng nhập điểm: ✅")
-            logger.info("🔗 Google Sheets integration: ✅")
-            logger.info("⏰ Timezone: Asia/Ho_Chi_Minh")
-            logger.info("📱 Bot sẵn sàng nhận tin nhắn!")
-            
-            # Create application
-            self.application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
-            
-            # Setup handlers
-            self.setup_handlers()
-            
-            # Run bot
-            self.application.run_polling(allowed_updates=Update.ALL_TYPES)
-            
-        except KeyboardInterrupt:
-            logger.info("🛑 Bot đã được dừng bởi người dùng")
-        except Exception as e:
-            logger.error(f"❌ Lỗi khi chạy bot: {e}")
-            raise
+        # Start bot
+        logger.info("🚀 Bot đang khởi động...")
+        logger.info("📋 Chức năng báo cáo: ✅")
+        logger.info("💯 Chức năng nhập điểm: ✅")
+        logger.info("🔗 Google Sheets integration: ✅")
+        logger.info("⏰ Timezone: Asia/Ho_Chi_Minh")
+        logger.info("📱 Bot sẵn sàng nhận tin nhắn!")
+        
+        # Create application
+        self.application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
+        
+        # Setup handlers
+        self.setup_handlers()
+        
+        # Run bot
+        self.application.run_polling(allowed_updates=Update.ALL_TYPES)
 
 def main():
     """Main function"""
-    bot = TelegramBot()
-    bot.run()
+    try:
+        bot = TelegramBot()
+        bot.run()
+    except KeyboardInterrupt:
+        logger.info("🛑 Bot đã được dừng bởi người dùng")
+    except Exception as e:
+        logger.error(f"❌ Lỗi khi chạy bot: {e}")
+        raise
 
 if __name__ == "__main__":
+    # Fix for Windows event loop policy
+    import sys
+    import asyncio
+    
+    if sys.platform == 'win32':
+        # Set the event loop policy for Windows
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+    
     main()
