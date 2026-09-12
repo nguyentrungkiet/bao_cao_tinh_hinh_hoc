@@ -35,6 +35,13 @@ class SheetsClient:
             self.spreadsheet = self.client.open_by_key(GOOGLE_SHEET_ID)
             self.worksheet = self.spreadsheet.worksheet(SHEET_NAME)
             
+            try:
+                from config import DOCUMENTS_SHEET_NAME
+                self.doc_worksheet = self.spreadsheet.worksheet(DOCUMENTS_SHEET_NAME)
+            except Exception as e:
+                logger.warning(f"Could not open documents worksheet {DOCUMENTS_SHEET_NAME}: {e}")
+                self.doc_worksheet = None
+            
             logger.info("Google Sheets client initialized successfully")
             
         except Exception as e:
@@ -292,3 +299,71 @@ class SheetsClient:
         except Exception as e:
             logger.error(f"Failed to record score for {student_name}: {e}")
             return False, f"Lỗi khi ghi điểm cho {student_name}: {str(e)}"
+
+    def get_document_data(self, class_name: str) -> List[Dict]:
+        """
+        Lấy thông tin tài liệu cho một lớp
+        
+        Args:
+            class_name: Lớp cần lấy thông tin
+            
+        Returns:
+            List[Dict]: Danh sách tài liệu với thông tin [row, chapter, remaining]
+        """
+        if not self.doc_worksheet:
+            return []
+            
+        try:
+            # Lấy toàn bộ data
+            all_values = self.doc_worksheet.get_all_values()
+            
+            if len(all_values) < 2:
+                return []
+            
+            docs = []
+            
+            # Skip header, columns: Lớp (A), Chương (B), Số lượng còn (C)
+            for row_idx, row_data in enumerate(all_values[1:], start=2):
+                if len(row_data) >= 3:
+                    row_class = row_data[0].strip()
+                    if row_class == class_name:
+                        chapter = row_data[1].strip()
+                        try:
+                            remaining = int(row_data[2].strip() or 0)
+                        except ValueError:
+                            remaining = 0
+                            
+                        docs.append({
+                            "row": row_idx,
+                            "chapter": chapter,
+                            "remaining": remaining
+                        })
+            
+            return docs
+            
+        except Exception as e:
+            logger.error(f"Failed to get document data for class {class_name}: {e}")
+            return []
+
+    def update_document_count(self, row: int, new_count: int) -> bool:
+        """
+        Cập nhật số lượng tài liệu
+        
+        Args:
+            row: Dòng cần update
+            new_count: Số lượng mới
+            
+        Returns:
+            bool: Success status
+        """
+        if not self.doc_worksheet:
+            return False
+            
+        try:
+            # Cột C (3) là Số lượng còn
+            self.doc_worksheet.update_cell(row, 3, new_count)
+            logger.info(f"Updated document count at row {row} to {new_count}")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to update document count at row {row}: {e}")
+            return False

@@ -6,11 +6,12 @@ from telegram.ext import (
 )
 
 from config import (
-    TELEGRAM_BOT_TOKEN, MENU_REPORT, MENU_SCORE, 
-    CALLBACK_REPORT, CALLBACK_SCORE, CALLBACK_CANCEL, States
+    TELEGRAM_BOT_TOKEN, MENU_REPORT, MENU_SCORE, MENU_DOCUMENTS,
+    CALLBACK_REPORT, CALLBACK_SCORE, CALLBACK_DOCUMENTS, CALLBACK_CANCEL, States
 )
 from flows.report_flow import ReportFlow
 from flows.score_flow import ScoreFlow
+from flows.document_flow import DocumentFlow
 
 # Setup logging
 logging.basicConfig(
@@ -25,6 +26,7 @@ class TelegramBot:
     def __init__(self):
         self.report_flow = ReportFlow()
         self.score_flow = ScoreFlow()
+        self.document_flow = DocumentFlow()
         self.application = None
 
     async def start_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -32,10 +34,11 @@ class TelegramBot:
         user = update.effective_user
         welcome_text = f"""🎓 **Chào mừng {user.first_name}!**
 
-🤖 **Bot Thống Kê Điểm**
+🤖 **Bot Thống Kê Điểm & Tài Liệu**
 Hỗ trợ trợ giảng trong việc:
 📋 Báo cáo tình hình học 
 💯 Nhập điểm kiểm tra hàng loạt
+📚 Theo dõi và cập nhật tài liệu
 
 Chọn chức năng từ menu bên dưới:"""
         
@@ -49,7 +52,8 @@ Chọn chức năng từ menu bên dưới:"""
         """Tạo keyboard cố định với các nút chính"""
         keyboard = [
             [KeyboardButton("📋 Báo cáo"), KeyboardButton("💯 Nhập điểm")],
-            [KeyboardButton("ℹ️ Hướng dẫn"), KeyboardButton("📱 Menu")]
+            [KeyboardButton("📚 Thống kê tài liệu"), KeyboardButton("ℹ️ Hướng dẫn")],
+            [KeyboardButton("📱 Menu")]
         ]
         return ReplyKeyboardMarkup(keyboard, resize_keyboard=True, is_persistent=True)
 
@@ -72,6 +76,11 @@ Chọn chức năng từ menu bên dưới:"""
    Tên học sinh 2  9.0
    ```
 3. Bot tự động nhập vào Google Sheets
+
+**📚 Thống Kê Tài Liệu:**
+1. Chọn lớp từ danh sách
+2. Xem tình hình tài liệu còn lại của từng chương
+3. Chọn cập nhật và nhập số lượng mới
 
 **🎯 Lệnh Cơ Bản:**
 /start - Bắt đầu sử dụng
@@ -100,6 +109,7 @@ Có vấn đề? Liên hệ admin! 📞"""
         keyboard = [
             [InlineKeyboardButton(MENU_REPORT, callback_data=CALLBACK_REPORT)],
             [InlineKeyboardButton(MENU_SCORE, callback_data=CALLBACK_SCORE)],
+            [InlineKeyboardButton(MENU_DOCUMENTS, callback_data=CALLBACK_DOCUMENTS)],
             [InlineKeyboardButton("ℹ️ Hướng dẫn", callback_data="help")]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
@@ -140,6 +150,9 @@ Có vấn đề? Liên hệ admin! 📞"""
 
 **💯 Nhập Điểm Kiểm Tra:**
 1. Chọn lớp → 2. Dán block điểm → 3. Bot tự động xử lý
+
+**📚 Thống Kê Tài Liệu:**
+1. Chọn lớp → 2. Xem tài liệu còn lại → 3. Cập nhật số lượng
 
 **🎯 Các Lệnh:**
 /start, /menu, /help, /cancel
@@ -238,9 +251,40 @@ Có vấn đề? Liên hệ admin! 📞"""
             conversation_timeout=1800,  # 30 minutes timeout
         )
         
+        # Document flow conversation handler
+        doc_conv_handler = ConversationHandler(
+            entry_points=[
+                CallbackQueryHandler(
+                    self.document_flow.start_document_flow, 
+                    pattern=f"^{CALLBACK_DOCUMENTS}$"
+                ),
+                MessageHandler(
+                    filters.Regex("^📚 Thống kê tài liệu$"),
+                    self.document_flow.start_document_flow_from_message
+                )
+            ],
+            states={
+                States.DOC_CLASS_SELECTION: [
+                    CallbackQueryHandler(self.document_flow.handle_class_selection)
+                ],
+                States.DOC_ACTION_SELECTION: [
+                    CallbackQueryHandler(self.document_flow.handle_action_selection)
+                ],
+                States.DOC_CHAPTER_SELECTION: [
+                    CallbackQueryHandler(self.document_flow.handle_chapter_selection)
+                ],
+                States.DOC_UPDATE_INPUT: [
+                    MessageHandler(filters.TEXT & ~filters.COMMAND, self.document_flow.handle_update_input)
+                ]
+            },
+            fallbacks=[CommandHandler("cancel", self.document_flow.cancel_document_flow)],
+            conversation_timeout=1800,  # 30 minutes timeout
+        )
+        
         # Add conversation handlers
         self.application.add_handler(report_conv_handler)
         self.application.add_handler(score_conv_handler)
+        self.application.add_handler(doc_conv_handler)
         
         # Main menu callback handler (for non-conversation callbacks)
         self.application.add_handler(CallbackQueryHandler(self.handle_main_menu_callback))
@@ -272,6 +316,7 @@ Có vấn đề? Liên hệ admin! 📞"""
         logger.info("🚀 Bot đang khởi động...")
         logger.info("📋 Chức năng báo cáo: ✅")
         logger.info("💯 Chức năng nhập điểm: ✅")
+        logger.info("📚 Chức năng thống kê tài liệu: ✅")
         logger.info("🔗 Google Sheets integration: ✅")
         logger.info("⏰ Timezone: Asia/Ho_Chi_Minh")
         logger.info("📱 Bot sẵn sàng nhận tin nhắn!")

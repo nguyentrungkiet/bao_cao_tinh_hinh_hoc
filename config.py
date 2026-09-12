@@ -33,6 +33,7 @@ GROUP_CHAT_IDS: Dict[str, int] = {
 GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1rq1DDObItEtFeyyghv-Do-hPvYB_mwaTWihTJ8lfQCk/edit?resourcekey=&gid=767173574#gid=767173574"
 GOOGLE_SHEET_ID = "1rq1DDObItEtFeyyghv-Do-hPvYB_mwaTWihTJ8lfQCk"
 SHEET_NAME = "Thống kê điểm"
+DOCUMENTS_SHEET_NAME = "Thống kê tài liệu"
 CREDENTIALS_FILE = "credentials.json"
 
 # Conversation states
@@ -49,13 +50,21 @@ class States:
     SCORE_INPUT = 11
     SCORE_CONFIRMATION = 12
 
+    # Document flow states
+    DOC_CLASS_SELECTION = 20
+    DOC_ACTION_SELECTION = 21
+    DOC_CHAPTER_SELECTION = 22
+    DOC_UPDATE_INPUT = 23
+
 # Menu options
 MENU_REPORT = "📋 Báo cáo tình hình học"
 MENU_SCORE = "💯 Nhập điểm kiểm tra"
+MENU_DOCUMENTS = "📚 Thống kê tài liệu"
 
 # Callback data patterns
 CALLBACK_REPORT = "report"
 CALLBACK_SCORE = "score"
+CALLBACK_DOCUMENTS = "documents"
 CALLBACK_CLASS_PREFIX = "class_"
 CALLBACK_DATE_USE = "date_use"
 CALLBACK_DATE_CUSTOM = "date_custom"
