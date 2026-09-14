@@ -1,10 +1,9 @@
 import io
-import matplotlib.pyplot as plt
 import matplotlib
-from typing import List, Dict
-
 # Use a non-interactive backend so it doesn't try to open windows
 matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+from typing import List, Dict
 
 def generate_document_chart(base_class: str, docs: List[Dict]) -> io.BytesIO:
     """

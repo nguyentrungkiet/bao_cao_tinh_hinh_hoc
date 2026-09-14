@@ -146,11 +146,16 @@ class DocumentFlow:
             if docs:
                 # Gửi ảnh biểu đồ
                 chart_buf = generate_document_chart(base_class, docs)
+                chart_buf.name = f"chart_khoi_{base_class}.png"
                 await context.bot.send_photo(
                     chat_id=update.effective_chat.id,
                     photo=chart_buf,
-                    caption=f"📊 Biểu đồ thống kê tài liệu Khối {base_class}"
+                    caption=f"📊 Biểu đồ thống kê tài liệu Khối {base_class}",
+                    read_timeout=30,
+                    write_timeout=30,
+                    connect_timeout=30
                 )
+                chart_buf.close()
             # Không return ConversationHandler.END để người dùng vẫn có thể click các nút ở menu hiện tại
             return States.DOC_ACTION_SELECTION
             
