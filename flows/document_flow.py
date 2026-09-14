@@ -6,7 +6,6 @@ from config import (
     CALLBACK_CLASS_PREFIX, CALLBACK_CANCEL
 )
 from sheets_client import SheetsClient
-from utils.chart_generator import generate_document_chart
 
 logger = logging.getLogger(__name__)
 
@@ -97,7 +96,6 @@ class DocumentFlow:
                 
             keyboard = [
                 [InlineKeyboardButton("🔄 Cập nhật số lượng", callback_data="doc_update")],
-                [InlineKeyboardButton("📊 Xem biểu đồ", callback_data="doc_chart")],
                 [InlineKeyboardButton("❌ Thoát", callback_data=CALLBACK_CANCEL)]
             ]
             
@@ -132,33 +130,13 @@ class DocumentFlow:
         return States.DOC_ACTION_SELECTION
 
     async def handle_action_selection(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Xử lý chọn hành động (cập nhật, xem biểu đồ, hay hủy)"""
+        """Xử lý chọn hành động (cập nhật hay hủy)"""
         query = update.callback_query
         await query.answer()
         
         if query.data == CALLBACK_CANCEL:
             await query.edit_message_text("❌ Đã thoát thống kê tài liệu.")
             return ConversationHandler.END
-            
-        if query.data == "doc_chart":
-            docs = context.user_data.get("docs", [])
-            base_class = context.user_data["selected_class"].split('.')[0]
-            if docs:
-                # Gửi ảnh biểu đồ
-                chart_buf = generate_document_chart(base_class, docs)
-                photo_bytes = chart_buf.getvalue()
-                chart_buf.close()
-                
-                await context.bot.send_photo(
-                    chat_id=update.effective_chat.id,
-                    photo=photo_bytes,
-                    caption=f"📊 Biểu đồ thống kê tài liệu Khối {base_class}",
-                    read_timeout=60,
-                    write_timeout=60,
-                    connect_timeout=60
-                )
-            # Không return ConversationHandler.END để người dùng vẫn có thể click các nút ở menu hiện tại
-            return States.DOC_ACTION_SELECTION
             
         if query.data == "doc_update":
             docs = context.user_data.get("docs", [])
